@@ -5,3 +5,6 @@ libs/*
 .gradle/*
 out/*
 TreeChopper.iml
+*.ipr
+*.iws
+*.iml
