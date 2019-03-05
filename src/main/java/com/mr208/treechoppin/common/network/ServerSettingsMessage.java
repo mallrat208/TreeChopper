@@ -1,21 +1,22 @@
-package treechopper.common.network;
+package com.mr208.treechoppin.common.network;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.IThreadListener;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import treechopper.common.config.ConfigurationHandler;
+import com.mr208.treechoppin.common.config.ConfigurationHandler;
 
-public class ClientSettingsMessage implements IMessage {
+public class ServerSettingsMessage implements IMessage {
 
   private boolean m_ReverseShift;
   private boolean m_DisableShift;
 
-  public ClientSettingsMessage() {
+  public ServerSettingsMessage() {
   }
 
-  public ClientSettingsMessage(boolean reverseShift, boolean disableShift) {
+  public ServerSettingsMessage(boolean reverseShift, boolean disableShift) {
     m_ReverseShift = reverseShift;
     m_DisableShift = disableShift;
   }
@@ -32,11 +33,11 @@ public class ClientSettingsMessage implements IMessage {
     buf.writeBoolean(m_DisableShift);
   }
 
-  public static class MsgHandler implements IMessageHandler<ClientSettingsMessage, IMessage> {
+  public static class MsgHandler implements IMessageHandler<ServerSettingsMessage, IMessage> {
 
     @Override
-    public IMessage onMessage(ClientSettingsMessage message, MessageContext ctx) {
-      IThreadListener mainThread = ctx.getServerHandler().player.getServerWorld();
+    public IMessage onMessage(ServerSettingsMessage message, MessageContext ctx) {
+      IThreadListener mainThread = Minecraft.getMinecraft();
       mainThread.addScheduledTask(new Runnable() {
         @Override
         public void run() {

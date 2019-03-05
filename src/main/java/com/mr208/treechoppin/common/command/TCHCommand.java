@@ -1,4 +1,4 @@
-package treechopper.common.command;
+package com.mr208.treechoppin.common.command;
 
 import com.google.common.collect.Lists;
 import net.minecraft.client.resources.I18n;
@@ -10,10 +10,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import treechopper.common.config.ConfigurationHandler;
-import treechopper.common.network.ClientSettingsMessage;
-import treechopper.core.TreeChopper;
-import treechopper.proxy.CommonProxy;
+import com.mr208.treechoppin.common.config.ConfigurationHandler;
+import com.mr208.treechoppin.common.network.ClientSettingsMessage;
+import com.mr208.treechoppin.core.TreeChoppin;
+import com.mr208.treechoppin.proxy.CommonProxy;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -102,7 +102,7 @@ public class TCHCommand extends CommandBase {
           sender.sendMessage(new TextComponentTranslation("[" + TextFormatting.GOLD + "TCH" + TextFormatting.RESET + "] " + GetTranslatedText(sender, "command.reverseShiftSwitch", "Reverse function has been switched") + " " + TextFormatting.RED + "OFF"));
         }
 
-        TreeChopper.m_Network.sendToAll(new ClientSettingsMessage(ConfigurationHandler.reverseShift, ConfigurationHandler.disableShift));
+        TreeChoppin.m_Network.sendToAll(new ClientSettingsMessage(ConfigurationHandler.reverseShift, ConfigurationHandler.disableShift));
 
       } else if (args[0].equals("disShift")) {
         if (args.length != 2) {
@@ -116,7 +116,7 @@ public class TCHCommand extends CommandBase {
           sender.sendMessage(new TextComponentTranslation("[" + TextFormatting.GOLD + "TCH" + TextFormatting.RESET + "] " + GetTranslatedText(sender, "command.disableShiftSwitch", "Disable shift function has been switched") + " " + TextFormatting.RED + "OFF"));
         }
 
-        TreeChopper.m_Network.sendToAll(new ClientSettingsMessage(ConfigurationHandler.disableShift, ConfigurationHandler.disableShift));
+        TreeChoppin.m_Network.sendToAll(new ClientSettingsMessage(ConfigurationHandler.disableShift, ConfigurationHandler.disableShift));
 
       } else {
         throw new WrongUsageException(GetTranslatedText(sender, "command.errorMessage", "Type \"/tch help\" for help"));

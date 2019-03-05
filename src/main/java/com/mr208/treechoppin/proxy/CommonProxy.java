@@ -1,5 +1,6 @@
-package treechopper.proxy;
+package com.mr208.treechoppin.proxy;
 
+import com.mr208.treechoppin.core.TreeChoppin;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemAxe;
@@ -9,25 +10,14 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import treechopper.common.config.ConfigurationHandler;
-import treechopper.common.handler.TreeHandler;
+import com.mr208.treechoppin.common.config.ConfigurationHandler;
+import com.mr208.treechoppin.common.handler.TreeHandler;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-class PlayerInteract {
-
-  public BlockPos m_BlockPos; // Interact block position
-  public float m_LogCount;
-  public int m_AxeDurability;
-
-  public PlayerInteract(BlockPos blockPos, float logCount, int axeDurability) {
-    m_BlockPos = blockPos;
-    m_LogCount = logCount;
-    m_AxeDurability = axeDurability;
-  }
-};
+;
 
 public class CommonProxy {
 
@@ -37,10 +27,6 @@ public class CommonProxy {
 
   @SubscribeEvent
   public void InteractWithTree(PlayerInteractEvent interactEvent) {
-
-    if (!ConfigurationHandler.modActivation) {
-      return;
-    }
 
     if (interactEvent.getSide().isClient() && m_PlayerPrintNames.containsKey(interactEvent.getEntityPlayer().getPersistentID()) && m_PlayerPrintNames.get(interactEvent.getEntityPlayer().getPersistentID())) {
       interactEvent.getEntityPlayer().sendMessage(new TextComponentTranslation(I18n.format("proxy.printBlock") + " " + interactEvent.getWorld().getBlockState(interactEvent.getPos()).getBlock().getUnlocalizedName()));
@@ -114,11 +100,9 @@ public class CommonProxy {
       if (blockPos.equals(breakEvent.getPos())) {
         treeHandler.DestroyTree(breakEvent.getWorld(), breakEvent.getPlayer());
 
-        if (!breakEvent.getPlayer().isCreative() && breakEvent.getPlayer().getHeldItemMainhand().isItemStackDamageable()) {
-
-          int axeDurability = breakEvent.getPlayer().getHeldItemMainhand().getItemDamage() + (int) (m_PlayerData.get(breakEvent.getPlayer().getPersistentID()).m_LogCount * 1.5);
-
-          breakEvent.getPlayer().getHeldItemMainhand().setItemDamage(axeDurability);
+        if (!breakEvent.getPlayer().isCreative() && breakEvent.getPlayer().getHeldItemMainhand().isItemStackDamageable() && TreeChoppin.registeredAxes.getOrDefault(breakEvent.getPlayer().getHeldItemMainhand().getItem(), false)) {
+          int extraDamage = (int)(m_PlayerData.get(breakEvent.getPlayer().getPersistentID()).m_LogCount * 1.5);
+          breakEvent.getPlayer().getHeldItemMainhand().damageItem(extraDamage, breakEvent.getPlayer());
         }
       }
     }
@@ -126,15 +110,10 @@ public class CommonProxy {
 
   protected boolean CheckWoodenBlock(World world, BlockPos blockPos) {
 
-    if (ConfigurationHandler.blockWhiteList.contains(world.getBlockState(blockPos).getBlock().getUnlocalizedName())) {
+    if(TreeChoppin.registeredLogs.contains(world.getBlockState(blockPos).getBlock()))
       return true;
-    }
-
-    if (!world.getBlockState(blockPos).getBlock().isWood(world, blockPos)) {
-      return false;
-    }
-
-    return true;
+    
+    return world.getBlockState(blockPos).getBlock().isWood(world,blockPos);
   }
 
   protected boolean CheckItemInHand(EntityPlayer entityPlayer) {
@@ -142,10 +121,9 @@ public class CommonProxy {
     if (entityPlayer.getHeldItemMainhand().isEmpty()) {
       return false;
     }
-
-    if (ConfigurationHandler.axeTypes.contains(entityPlayer.getHeldItemMainhand().getItem().getUnlocalizedName())) {
+    
+    if(TreeChoppin.registeredAxes.containsKey(entityPlayer.getHeldItemMainhand().getItem()))
       return true;
-    }
 
     boolean test;
 

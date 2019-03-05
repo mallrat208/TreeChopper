@@ -1,5 +1,6 @@
-package treechopper.common.handler;
+package com.mr208.treechoppin.common.handler;
 
+import com.mr208.treechoppin.core.TreeChoppin;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -11,8 +12,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
-import treechopper.common.config.ConfigurationHandler;
-import treechopper.common.tree.Tree;
+import com.mr208.treechoppin.common.config.ConfigurationHandler;
+import com.mr208.treechoppin.common.tree.Tree;
 
 import java.util.*;
 
@@ -136,7 +137,7 @@ public class TreeHandler {
         tree.InsertLeaf(blockPos);
       }
 
-      if (ConfigurationHandler.decayLeaves && ConfigurationHandler.leafWhiteList.contains(world.getBlockState(blockPos).getBlock().getUnlocalizedName())) {
+      if (ConfigurationHandler.decayLeaves && TreeChoppin.registeredLeaves.contains(world.getBlockState(blockPos).getBlock())) {
         tree.InsertLeaf(blockPos);
 
         return false;

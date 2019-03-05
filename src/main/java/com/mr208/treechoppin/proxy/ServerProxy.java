@@ -1,9 +1,9 @@
-package treechopper.proxy;
+package com.mr208.treechoppin.proxy;
 
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import treechopper.common.config.ConfigurationHandler;
-import treechopper.common.handler.TreeHandler;
+import com.mr208.treechoppin.common.config.ConfigurationHandler;
+import com.mr208.treechoppin.common.handler.TreeHandler;
 
 public class ServerProxy extends CommonProxy {
 
