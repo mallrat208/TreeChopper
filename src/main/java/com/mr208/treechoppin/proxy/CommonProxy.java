@@ -1,16 +1,19 @@
 package com.mr208.treechoppin.proxy;
 
+import com.mr208.treechoppin.core.TCConfig;
 import com.mr208.treechoppin.core.TreeChoppin;
-import net.minecraft.client.resources.I18n;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemAxe;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import com.mr208.treechoppin.common.config.ConfigurationHandler;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import com.mr208.treechoppin.common.handler.TreeHandler;
 
 import java.util.HashMap;
@@ -19,40 +22,36 @@ import java.util.UUID;
 
 ;
 
+@EventBusSubscriber()
 public class CommonProxy {
 
   public static Map<UUID, Boolean> m_PlayerPrintNames = new HashMap<>();
   protected static Map<UUID, PlayerInteract> m_PlayerData = new HashMap<>();
-  protected TreeHandler treeHandler;
+  protected static TreeHandler treeHandler;
 
   @SubscribeEvent
-  public void InteractWithTree(PlayerInteractEvent interactEvent) {
-
-    if (interactEvent.getSide().isClient() && m_PlayerPrintNames.containsKey(interactEvent.getEntityPlayer().getPersistentID()) && m_PlayerPrintNames.get(interactEvent.getEntityPlayer().getPersistentID())) {
-      interactEvent.getEntityPlayer().sendMessage(new TextComponentTranslation(I18n.format("proxy.printBlock") + " " + interactEvent.getWorld().getBlockState(interactEvent.getPos()).getBlock().getUnlocalizedName()));
-      interactEvent.getEntityPlayer().sendMessage(new TextComponentTranslation(I18n.format("proxy.printMainHand") + " " + interactEvent.getEntityPlayer().getHeldItemMainhand().getUnlocalizedName()));
-    }
+  public static void InteractWithTree(PlayerInteractEvent interactEvent) {
 
     int logCount;
     boolean shifting = true;
 
-    if (!ConfigurationHandler.disableShift) {
-      if (interactEvent.getEntityPlayer().isSneaking() && !ConfigurationHandler.reverseShift) {
+    if (!TCConfig.options.disableShift.get()) {
+      if (interactEvent.getEntityPlayer().isSneaking() && !TreeChoppin.reverseShift) {
         shifting = false;
       }
 
-      if (!interactEvent.getEntityPlayer().isSneaking() && ConfigurationHandler.reverseShift) {
+      if (!interactEvent.getEntityPlayer().isSneaking() && TreeChoppin.reverseShift) {
         shifting = false;
       }
     }
 
     if (CheckWoodenBlock(interactEvent.getWorld(), interactEvent.getPos()) && CheckItemInHand(interactEvent.getEntityPlayer()) && shifting) {
 
-      int axeDurability = interactEvent.getEntityPlayer().getHeldItemMainhand().getMaxDamage() - interactEvent.getEntityPlayer().getHeldItemMainhand().getItemDamage();
+      int axeDurability = interactEvent.getEntityPlayer().getHeldItemMainhand().getMaxDamage() - interactEvent.getEntityPlayer().getHeldItemMainhand().getDamage();
 
-      if (m_PlayerData.containsKey(interactEvent.getEntityPlayer().getPersistentID()) &&
-              m_PlayerData.get(interactEvent.getEntityPlayer().getPersistentID()).m_BlockPos.equals(interactEvent.getPos()) &&
-              m_PlayerData.get(interactEvent.getEntityPlayer().getPersistentID()).m_AxeDurability == axeDurability) {
+      if (m_PlayerData.containsKey(interactEvent.getEntityPlayer().getUniqueID()) &&
+              m_PlayerData.get(interactEvent.getEntityPlayer().getUniqueID()).m_BlockPos.equals(interactEvent.getPos()) &&
+              m_PlayerData.get(interactEvent.getEntityPlayer().getUniqueID()).m_AxeDurability == axeDurability) {
         return;
       }
 
@@ -62,28 +61,28 @@ public class CommonProxy {
             /*System.out.println("Max damage: " + interactEvent.getEntityPlayer().getHeldItemMainhand().getMaxDamage());
             System.out.println("Item damage: " + interactEvent.getEntityPlayer().getHeldItemMainhand().getItemDamage());*/
 
-      if (interactEvent.getEntityPlayer().getHeldItemMainhand().isItemStackDamageable() && axeDurability < logCount) {
-        m_PlayerData.remove(interactEvent.getEntityPlayer().getPersistentID());
+      if (interactEvent.getEntityPlayer().getHeldItemMainhand().isDamageable() && axeDurability < logCount) {
+        m_PlayerData.remove(interactEvent.getEntityPlayer().getUniqueID());
         return;
       }
 
       if (logCount > 1) {
-        m_PlayerData.put(interactEvent.getEntityPlayer().getPersistentID(), new PlayerInteract(interactEvent.getPos(), logCount, axeDurability));
+        m_PlayerData.put(interactEvent.getEntityPlayer().getUniqueID(), new PlayerInteract(interactEvent.getPos(), logCount, axeDurability));
       }
     } else {
-      m_PlayerData.remove(interactEvent.getEntityPlayer().getPersistentID());
+      m_PlayerData.remove(interactEvent.getEntityPlayer().getUniqueID());
     }
   }
 
   @SubscribeEvent
-  public void BreakingBlock(net.minecraftforge.event.entity.player.PlayerEvent.BreakSpeed breakSpeed) {
+  public static void BreakingBlock(net.minecraftforge.event.entity.player.PlayerEvent.BreakSpeed breakSpeed) {
 
-    if (m_PlayerData.containsKey(breakSpeed.getEntityPlayer().getPersistentID())) {
+    if (m_PlayerData.containsKey(breakSpeed.getEntityPlayer().getUniqueID())) {
 
-      BlockPos blockPos = m_PlayerData.get(breakSpeed.getEntityPlayer().getPersistentID()).m_BlockPos;
+      BlockPos blockPos = m_PlayerData.get(breakSpeed.getEntityPlayer().getUniqueID()).m_BlockPos;
 
       if (blockPos.equals(breakSpeed.getPos())) {
-        breakSpeed.setNewSpeed(breakSpeed.getOriginalSpeed() / (m_PlayerData.get(breakSpeed.getEntityPlayer().getPersistentID()).m_LogCount / 2.0f));
+        breakSpeed.setNewSpeed(breakSpeed.getOriginalSpeed() / (m_PlayerData.get(breakSpeed.getEntityPlayer().getUniqueID()).m_LogCount / 2.0f));
       } else {
         breakSpeed.setNewSpeed(breakSpeed.getOriginalSpeed());
       }
@@ -91,32 +90,32 @@ public class CommonProxy {
   }
 
   @SubscribeEvent
-  public void DestroyWoodBlock(BlockEvent.BreakEvent breakEvent) {
+  public static void DestroyWoodBlock(BlockEvent.BreakEvent breakEvent) {
 
-    if (m_PlayerData.containsKey(breakEvent.getPlayer().getPersistentID())) {
+    if (m_PlayerData.containsKey(breakEvent.getPlayer().getUniqueID())) {
 
-      BlockPos blockPos = m_PlayerData.get(breakEvent.getPlayer().getPersistentID()).m_BlockPos;
+      BlockPos blockPos = m_PlayerData.get(breakEvent.getPlayer().getUniqueID()).m_BlockPos;
 
       if (blockPos.equals(breakEvent.getPos())) {
         treeHandler.DestroyTree(breakEvent.getWorld(), breakEvent.getPlayer());
 
-        if (!breakEvent.getPlayer().isCreative() && breakEvent.getPlayer().getHeldItemMainhand().isItemStackDamageable() && TreeChoppin.registeredAxes.getOrDefault(breakEvent.getPlayer().getHeldItemMainhand().getItem(), false)) {
-          int extraDamage = (int)(m_PlayerData.get(breakEvent.getPlayer().getPersistentID()).m_LogCount * 1.5);
+        if (!breakEvent.getPlayer().isCreative() && breakEvent.getPlayer().getHeldItemMainhand().isDamageable() && TreeChoppin.registeredAxes.getOrDefault(breakEvent.getPlayer().getHeldItemMainhand().getItem(), false)) {
+          int extraDamage = (int)(m_PlayerData.get(breakEvent.getPlayer().getUniqueID()).m_LogCount * 1.5);
           breakEvent.getPlayer().getHeldItemMainhand().damageItem(extraDamage, breakEvent.getPlayer());
         }
       }
     }
   }
 
-  protected boolean CheckWoodenBlock(World world, BlockPos blockPos) {
+  protected static boolean CheckWoodenBlock(World world, BlockPos blockPos) {
 
     if(TreeChoppin.registeredLogs.contains(world.getBlockState(blockPos).getBlock()))
       return true;
     
-    return world.getBlockState(blockPos).getBlock().isWood(world,blockPos);
+    return world.getBlockState(blockPos).getMaterial() == Material.WOOD;
   }
 
-  protected boolean CheckItemInHand(EntityPlayer entityPlayer) {
+  protected static boolean CheckItemInHand(EntityPlayer entityPlayer) {
 
     if (entityPlayer.getHeldItemMainhand().isEmpty()) {
       return false;

@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[25,)"
+issueTrackerURL="http://my.issue.tracker/"
+displayURL="https://minecraft.curseforge.com/projects/tree-choppin"
+authors="mallrat208"
+
+[[mods]]
+modId="treechoppin"
+version="1.0.0"
+displayName="TreeChoppin"
+# updateJSONURL="http://myurl.me/" #optional
+description='''
+Fell trees in one go
+'''

@@ -2,17 +2,19 @@ package com.mr208.treechoppin.common.handler;
 
 import com.mr208.treechoppin.core.TreeChoppin;
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUseContext;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
-import com.mr208.treechoppin.common.config.ConfigurationHandler;
 import com.mr208.treechoppin.common.tree.Tree;
 
 import java.util.*;
@@ -65,7 +67,7 @@ public class TreeHandler {
     }
 
     tree.setM_Position(blockPos);
-    m_Trees.put(entityPlayer.getPersistentID(), tree);
+    m_Trees.put(entityPlayer.getUniqueID(), tree);
 
     return tree.GetLogCount();
   }
@@ -133,17 +135,17 @@ public class TreeHandler {
 
     if (world.getBlockState(blockPos).getBlock() != originBlock) {
 
-      if (ConfigurationHandler.plantSapling && world.getBlockState(blockPos).getBlock().isLeaves(world.getBlockState(blockPos), world, blockPos) && tree.GetM_Leaves().isEmpty()) {
+      if (TreeChoppin.plantSapling && (world.getBlockState(blockPos).getMaterial() == Material.LEAVES) && tree.GetM_Leaves().isEmpty()) {
         tree.InsertLeaf(blockPos);
       }
 
-      if (ConfigurationHandler.decayLeaves && TreeChoppin.registeredLeaves.contains(world.getBlockState(blockPos).getBlock())) {
+      if (TreeChoppin.decayLeaves && TreeChoppin.registeredLeaves.contains(world.getBlockState(blockPos).getBlock())) {
         tree.InsertLeaf(blockPos);
 
         return false;
       }
 
-      if (ConfigurationHandler.decayLeaves && world.getBlockState(blockPos).getBlock().isLeaves(world.getBlockState(blockPos), world, blockPos)) {
+      if (TreeChoppin.decayLeaves && (world.getBlockState(blockPos).getMaterial() == Material.LEAVES)) {
         tree.InsertLeaf(blockPos);
 
         return false;
@@ -157,46 +159,46 @@ public class TreeHandler {
     return true;
   }
 
-  public void DestroyTree(World world, EntityPlayer entityPlayer) {
+  public void DestroyTree(IWorld world, EntityPlayer entityPlayer) {
 
     int soundReduced = 0;
 
-    if (m_Trees.containsKey(entityPlayer.getPersistentID())) {
+    if (m_Trees.containsKey(entityPlayer.getUniqueID())) {
 
-      Tree tmpTree = m_Trees.get(entityPlayer.getPersistentID());
+      Tree tmpTree = m_Trees.get(entityPlayer.getUniqueID());
 
       for (BlockPos blockPos : tmpTree.GetM_Wood()) {
 
         if (soundReduced <= 1) {
           world.destroyBlock(blockPos, true);
         } else {
-          world.getBlockState(blockPos).getBlock().dropBlockAsItem(world, blockPos, world.getBlockState(blockPos), 1);
+          world.getBlockState(blockPos).dropBlockAsItem(world.getWorld(), blockPos, 0);
         }
 
-        world.setBlockToAir(blockPos);
+        world.removeBlock(blockPos);
 
         soundReduced++;
       }
 
-      if (ConfigurationHandler.plantSapling && !tmpTree.GetM_Leaves().isEmpty()) {
+      if (TreeChoppin.plantSapling && !tmpTree.GetM_Leaves().isEmpty()) {
 
         BlockPos tmpPosition = getLastElement(tmpTree.GetM_Leaves());
-        PlantSapling(world, tmpPosition, tmpTree.getM_Position());
+        PlantSapling(world.getWorld(), tmpPosition, tmpTree.getM_Position());
       }
 
       soundReduced = 0;
 
-      if (ConfigurationHandler.decayLeaves) {
+      if (TreeChoppin.decayLeaves) {
 
         for (BlockPos blockPos : tmpTree.GetM_Leaves()) {
 
           if (soundReduced <= 1) {
             world.destroyBlock(blockPos, true);
           } else {
-            world.getBlockState(blockPos).getBlock().dropBlockAsItem(world, blockPos, world.getBlockState(blockPos), 1);
+            world.getBlockState(blockPos).dropBlockAsItem(world.getWorld(), blockPos, 1);
           }
 
-          world.setBlockToAir(blockPos);
+          world.removeBlock(blockPos);
 
           soundReduced++;
         }
@@ -212,7 +214,7 @@ public class TreeHandler {
 
     while (leafDrop.isEmpty() && counter <= 100) {
       NonNullList<ItemStack> tmpList = NonNullList.create();
-      world.getBlockState(blockPos).getBlock().getDrops(tmpList, world, blockPos, world.getBlockState(blockPos), 3);
+      world.getBlockState(blockPos).getDrops(tmpList, world, blockPos,  3);
       leafDrop.addAll(tmpList);
 
       counter++;
@@ -226,7 +228,7 @@ public class TreeHandler {
     fakePlayer.setHeldItem(EnumHand.MAIN_HAND, leafDrop.iterator().next());
 
     for (ItemStack itemStack : leafDrop) {
-      itemStack.onItemUse(fakePlayer, world, plantPos1, EnumHand.MAIN_HAND, EnumFacing.NORTH, 0, 0, 0);
+      itemStack.onItemUse(new ItemUseContext(fakePlayer, itemStack, plantPos1, EnumFacing.NORTH, 0,0,0 ));
     }
   }
 }
